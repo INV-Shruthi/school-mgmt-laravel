@@ -105,7 +105,17 @@ class AuthController extends Controller
 
     public function me()
     {
-        $user = auth()->user()->load('teacher', 'student');
+        $user = auth()->user();
+
+        if ($user->role === 'teacher') {
+            $user->load('teacher');
+        } elseif ($user->role === 'student') {
+            $user->load('student');
+        }
+
         return response()->json($user);
     }
 }
+
+
+
