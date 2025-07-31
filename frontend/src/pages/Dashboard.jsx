@@ -1,30 +1,40 @@
-import { useEffect, useState } from 'react';
-import axios from '../api/axios';
+import React from 'react';
+import { AppBar, Toolbar, Typography, Button, Container } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
 export default function Dashboard() {
-  const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    axios.get('/me')
-      .then(res => setUser(res.data))
-      .catch(() => navigate('/'));
-  }, []);
-
-  const handleLogout = async () => {
-    await axios.post('/logout');
-    localStorage.removeItem('token');
-    navigate('/');
+  const handleLogout = () => {
+    localStorage.clear();  
+    navigate('/');      
   };
 
-  return user ? (
-    <div>
-      <h2>Welcome, {user.first_name}</h2>
-      <p>Role: {user.role}</p>
-      <button onClick={handleLogout}>Logout</button>
-    </div>
-  ) : (
-    <p>Loading...</p>
+  return (
+    <>
+      <AppBar position="static">
+        <Toolbar>
+          <Typography variant="h6" sx={{ flexGrow: 1 }}>
+            Admin Dashboard
+          </Typography>
+          <Button color="inherit" onClick={handleLogout}>
+            Logout
+          </Button>
+        </Toolbar>
+      </AppBar>
+
+      <Container sx={{ mt: 4 }}>
+        <Typography variant="h5">Welcome, Admin</Typography>
+        <Button variant="contained" color="primary" sx={{ m: 1 }}>
+          Register New User
+        </Button>
+        <Button variant="outlined" sx={{ m: 1 }}>
+          View Teachers
+        </Button>
+        <Button variant="outlined" sx={{ m: 1 }}>
+          View Students
+        </Button>
+      </Container>
+    </>
   );
 }
