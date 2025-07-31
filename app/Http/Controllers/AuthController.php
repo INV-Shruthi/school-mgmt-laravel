@@ -2,32 +2,29 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
+use App\Models\Teacher;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Tymon\JWTAuth\Facades\JWTAuth;
-use App\Models\User;
-use App\Models\Teacher;
-use App\Models\Student;
 
 class AuthController extends Controller
 {
     public function register(Request $request)
     {
-        // ✅ Allow only admin to register users
-        if (auth()->check() && auth()->user()->role !== 'admin') {
-            return response()->json(['error' => 'Only admin can register users'], 403);
+        // Only allow if authenticated user is admin
+        if (auth()->user()->role !== 'admin') {
+            return response()->json(['error' => 'Only admin can register new users'], 403);
         }
 
-        // ✅ Validate base user data
         $request->validate([
             'first_name' => 'required',
             'last_name'  => 'required',
             'email'      => 'required|email|unique:users',
             'password'   => 'required|min:6',
-            'role'       => 'required|in:teacher,student',
+            'role'       => 'required|in:admin,teacher,student',
         ]);
 
-        // ✅ Create the user
         $user = User::create([
             'first_name' => $request->first_name,
             'last_name'  => $request->last_name,
@@ -36,44 +33,27 @@ class AuthController extends Controller
             'role'       => $request->role,
         ]);
 
-        // ✅ Handle role-specific details
+        // If role is teacher, require and save teacher-specific data
         if ($request->role === 'teacher') {
             $request->validate([
-                'phone_number'     => 'required',
-                'employee_id'      => 'required|unique:teachers',
-                'subject'          => 'required',
-                'date_of_joining'  => 'required|date',
-                'status'           => 'required|in:active,inactive',
+                'phone_number'          => 'required',
+                'subject_specialization'=> 'required',
+                'employee_id'           => 'required|unique:teachers',
+                'date_of_joining'       => 'required|date',
+                'status'                => 'required|in:active,inactive',
             ]);
 
             Teacher::create([
-                'user_id'         => $user->id,
-                'phone_number'    => $request->phone_number,
-                'employee_id'     => $request->employee_id,
-                'subject'         => $request->subject,
-                'date_of_joining' => $request->date_of_joining,
-                'status'          => $request->status,
+                'user_id'               => $user->id,
+                'phone_number'          => $request->phone_number,
+                'subject_specialization'=> $request->subject_specialization,
+                'employee_id'           => $request->employee_id,
+                'date_of_joining'       => $request->date_of_joining,
+                'status'                => $request->status,
             ]);
         }
 
-        if ($request->role === 'student') {
-            $request->validate([
-                'roll_number'     => 'required|unique:students',
-                'class'           => 'required',
-                'section'         => 'required',
-                'admission_date'  => 'required|date',
-            ]);
-
-            Student::create([
-                'user_id'        => $user->id,
-                'roll_number'    => $request->roll_number,
-                'class'          => $request->class,
-                'section'        => $request->section,
-                'admission_date' => $request->admission_date,
-            ]);
-        }
-
-        return response()->json(['message' => 'User registered successfully with role details'], 201);
+        return response()->json(['message' => 'User registered successfully'], 201);
     }
 
     public function login(Request $request)
@@ -98,6 +78,6 @@ class AuthController extends Controller
 
     public function me()
     {
-        return response()->json(auth()->user());
+        return response()->json(auth()->user()->load('teacher'));
     }
 }
