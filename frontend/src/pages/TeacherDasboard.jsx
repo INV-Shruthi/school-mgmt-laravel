@@ -74,7 +74,7 @@ export default function TeacherDashboard() {
         headers: { Authorization: `Bearer ${token}` },
       });
       setEditDialogOpen(false);
-      fetchStudents(); // Refresh
+      fetchStudents(); 
     } catch (err) {
       console.error('Update error:', err);
     }

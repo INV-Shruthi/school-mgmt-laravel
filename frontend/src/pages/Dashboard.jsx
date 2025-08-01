@@ -19,7 +19,6 @@ export default function AdminDashboard() {
   const [showStudents, setShowStudents] = useState(false);
   const [alert, setAlert] = useState({ type: '', msg: '', open: false });
 
-  // Edit modal state
   const [editData, setEditData] = useState(null);
   const [openEditModal, setOpenEditModal] = useState(false);
 
@@ -127,7 +126,6 @@ export default function AdminDashboard() {
           {showStudents ? 'Hide Students' : 'View Students'}
         </Button>
 
-        {/* ALERT */}
         <Collapse in={alert.open}>
           <Alert severity={alert.type} sx={{ mt: 2 }}>{alert.msg}</Alert>
         </Collapse>
@@ -233,7 +231,6 @@ export default function AdminDashboard() {
           </Table>
         </Collapse>
 
-        {/* EDIT MODAL */}
         <Dialog open={openEditModal} onClose={() => setOpenEditModal(false)} fullWidth>
           <DialogTitle>Edit Teacher</DialogTitle>
           <DialogContent>
