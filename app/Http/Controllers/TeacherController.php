@@ -7,12 +7,14 @@ use Illuminate\Http\Request;
 
 class TeacherController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $this->authorizeAdmin();
-        return Teacher::with('user')->get();
-    }
 
+        $perPage = $request->input('per_page', 5); 
+
+        return Teacher::with('user')->paginate($perPage);
+    }
     public function show($id)
     {
         $teacher = Teacher::with('user')->findOrFail($id);

@@ -4,6 +4,7 @@ import {
   Collapse, Alert, Dialog, DialogTitle, DialogContent, DialogActions,
   Table, TableHead, TableBody, TableRow, TableCell
 } from '@mui/material';
+import { Pagination } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import axios from '../api/axios';
 
@@ -22,6 +23,14 @@ export default function AdminDashboard() {
   const [editData, setEditData] = useState(null);
   const [openEditModal, setOpenEditModal] = useState(false);
 
+  const [teacherPage, setTeacherPage] = useState(1);
+  const [teacherTotalPages, setTeacherTotalPages] = useState(1);
+
+  const [studentPage, setStudentPage] = useState(1);
+  const [studentTotalPages, setStudentTotalPages] = useState(1);
+
+
+  
   const handleLogout = () => {
     localStorage.clear();
     navigate('/');
@@ -55,20 +64,24 @@ export default function AdminDashboard() {
     }
   };
 
-  const fetchTeachers = async () => {
+  const fetchTeachers = async (page = 1) => {
     const token = localStorage.getItem('token');
-    const res = await axios.get('/teachers', {
+    const res = await axios.get(`/teachers?page=${page}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
-    setTeachers(res.data);
+    setTeachers(res.data.data); // Laravel's paginate returns data inside `data`
+    setTeacherPage(res.data.current_page);
+    setTeacherTotalPages(res.data.last_page);
   };
 
-  const fetchStudents = async () => {
+  const fetchStudents = async (page = 1) => {
     const token = localStorage.getItem('token');
-    const res = await axios.get('/students', {
+    const res = await axios.get(`/students?page=${page}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
-    setStudents(res.data);
+    setStudents(res.data.data);
+    setStudentPage(res.data.current_page);
+    setStudentTotalPages(res.data.last_page);
   };
 
   const handleDeleteTeacher = async (id) => {
@@ -97,10 +110,13 @@ export default function AdminDashboard() {
     fetchTeachers();
   };
 
-  useEffect(() => {
-    if (showTeachers) fetchTeachers();
-    if (showStudents) fetchStudents();
-  }, [showTeachers, showStudents]);
+useEffect(() => {
+  if (showTeachers) fetchTeachers(teacherPage);
+}, [showTeachers, teacherPage]);
+
+useEffect(() => {
+  if (showStudents) fetchStudents(studentPage);
+}, [showStudents, studentPage]);
 
   return (
     <>
@@ -196,6 +212,13 @@ export default function AdminDashboard() {
               ))}
             </TableBody>
           </Table>
+          <Pagination
+            count={teacherTotalPages}
+            page={teacherPage}
+            onChange={(e, value) => setTeacherPage(value)}
+            sx={{ mt: 2 }}
+          />
+          
         </Collapse>
 
         {/* STUDENT LIST */}
@@ -229,6 +252,12 @@ export default function AdminDashboard() {
               ))}
             </TableBody>
           </Table>
+          <Pagination
+            count={studentTotalPages}
+            page={studentPage}
+            onChange={(e, value) => setStudentPage(value)}
+            sx={{ mt: 2 }}
+          />
         </Collapse>
 
         <Dialog open={openEditModal} onClose={() => setOpenEditModal(false)} fullWidth>

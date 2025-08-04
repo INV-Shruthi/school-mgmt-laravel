@@ -5,20 +5,23 @@ namespace App\Http\Controllers;
 use App\Models\Student;
 use Illuminate\Http\Request;
 
+
+
 class StudentController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $perPage = $request->input('per_page', 5); 
         $user = auth()->user();
 
         if ($user->role === 'admin') {
-            return Student::with('user')->get();
+            return Student::with('user')->paginate($perPage);
         }
 
         if ($user->role === 'teacher') {
             return Student::with('user')
                 ->where('assigned_teacher_id', $user->teacher->id)
-                ->get();
+                ->paginate($perPage);
         }
 
         abort(403, 'Unauthorized');
