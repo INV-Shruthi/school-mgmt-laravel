@@ -16,7 +16,7 @@ export default function TeacherDashboard() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [studentsOpen, setStudentsOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [selectedStudent, setSelectedStudent] = useState([]);
   const [formData, setFormData] = useState({});
 
   const token = localStorage.getItem('token');
@@ -34,16 +34,21 @@ export default function TeacherDashboard() {
   };
 
   // Fetch assigned students
-  const fetchStudents = async () => {
-    try {
-      const res = await axios.get('/students', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setStudents(res.data);
-    } catch (err) {
-      console.error('Error fetching students:', err);
+const fetchStudents = async () => {
+  try {
+    const response = await axios.get('/students');
+    if (Array.isArray(response.data)) {
+      setStudents(response.data);
+    } else if (response.data && Array.isArray(response.data.data)) {
+      setStudents(response.data.data);
+    } else {
+      setStudents([]);
     }
-  };
+  } catch (error) {
+    console.error('Error fetching students:', error);
+    setStudents([]);
+  }
+};
 
   useEffect(() => {
     fetchTeacherProfile();

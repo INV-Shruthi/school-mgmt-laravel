@@ -58,7 +58,7 @@ class TeacherController extends Controller
         return response()->json(['message' => 'Teacher deleted successfully']);
     }
 
-    // ✅ Admin only
+    //  Admin only
     private function authorizeAdmin()
     {
         if (auth()->user()->role !== 'admin') {
@@ -66,7 +66,7 @@ class TeacherController extends Controller
         }
     }
 
-    // ✅ Admin or that specific teacher
+    // Admin or that specific teacher
     private function isAdminOrOwner(Teacher $teacher)
     {
         $user = auth()->user();
