@@ -184,7 +184,7 @@ export default function AdminDashboard() {
                 <TableRow key={t.id}>
                   <TableCell>{t.user.first_name} {t.user.last_name}</TableCell>
                   <TableCell>{t.user.email}</TableCell>
-                  <TableCell>{t.user.phone_number}</TableCell>
+                  <TableCell>{t.phone_number}</TableCell>
                   <TableCell>{t.subject_specialization}</TableCell>
                   <TableCell>{t.employee_id}</TableCell>
                   <TableCell>{t.status}</TableCell>
