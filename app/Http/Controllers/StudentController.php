@@ -15,13 +15,18 @@ class StudentController extends Controller
         $user = auth()->user();
 
         if ($user->role === 'admin') {
-            return Student::with('user')->paginate($perPage);
+            return Student::with('user')
+                     ->orderBy('created_at', 'desc') 
+                     ->paginate($perPage);
+
         }
 
         if ($user->role === 'teacher') {
             return Student::with('user')
+                ->orderBy('created_at', 'desc') 
                 ->where('assigned_teacher_id', $user->teacher->id)
                 ->paginate($perPage);
+                
         }
 
         abort(403, 'Unauthorized');
@@ -52,7 +57,11 @@ class StudentController extends Controller
         $student = Student::findOrFail($id);
         $user = auth()->user();
 
-        if ($user->role !== 'teacher' || $student->assigned_teacher_id !== $user->teacher->id) {
+        // Allow admin OR the assigned teacher
+        if (
+            $user->role !== 'admin' &&
+            ($user->role !== 'teacher' || $student->assigned_teacher_id !== $user->teacher->id)
+        ) {
             abort(403, 'Unauthorized');
         }
 
@@ -73,7 +82,11 @@ class StudentController extends Controller
         $student = Student::findOrFail($id);
         $user = auth()->user();
 
-        if ($user->role !== 'teacher' || $student->assigned_teacher_id !== $user->teacher->id) {
+        // Allow admin OR the assigned teacher
+        if (
+            $user->role !== 'admin' &&
+            ($user->role !== 'teacher' || $student->assigned_teacher_id !== $user->teacher->id)
+        ) {
             abort(403, 'Unauthorized');
         }
 
@@ -82,4 +95,3 @@ class StudentController extends Controller
         return response()->json(['message' => 'Student deleted successfully']);
     }
 }
-
