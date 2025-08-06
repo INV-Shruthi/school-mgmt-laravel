@@ -14,6 +14,7 @@ import { useNavigate } from 'react-router-dom';
 
 export default function StudentDashboard() {
   const [profile, setProfile] = useState(null);
+  const [teacher, setTeacher] = useState(null); 
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -30,9 +31,19 @@ export default function StudentDashboard() {
         },
       });
       setProfile(res.data);
+
+      const teacherId = res.data?.student?.assigned_teacher_id;
+      if (teacherId) {
+        const teacherRes = await axios.get(`/teachers/${teacherId}`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        });
+        setTeacher(teacherRes.data);
+      }
     } catch (err) {
-      console.error('Failed to fetch profile', err);
-      alert('Error fetching profile');
+      console.error('Failed to fetch profile or teacher', err);
+      alert('Error fetching profile or teacher');
     } finally {
       setLoading(false);
     }
@@ -75,6 +86,10 @@ export default function StudentDashboard() {
             <Typography gutterBottom><strong>Date of Birth:</strong> {profile.student?.date_of_birth}</Typography>
             <Typography gutterBottom><strong>Admission Date:</strong> {profile.student?.admission_date}</Typography>
             <Typography gutterBottom><strong>Status:</strong> {profile.student?.status}</Typography>
+
+            <Typography gutterBottom><strong>Assigned Teacher:</strong>{' '}
+              {teacher ? `${teacher.user.first_name} ${teacher.user.last_name}` : 'Not Assigned'}
+            </Typography>
           </Paper>
         ) : (
           <Typography variant="h6" color="error">

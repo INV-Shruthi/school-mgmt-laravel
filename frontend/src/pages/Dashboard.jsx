@@ -28,6 +28,8 @@ export default function AdminDashboard() {
   const [studentTotalPages, setStudentTotalPages] = useState(1);
   const [editStudentData, setEditStudentData] = useState(null);
   const [openEditStudentModal, setOpenEditStudentModal] = useState(false);
+  const [allTeachers, setAllTeachers] = useState([]);
+
 
   const handleLogout = () => {
     localStorage.clear();
@@ -74,6 +76,17 @@ const handleRegister = async () => {
     }, 3000);
   }
 };
+  const fetchAllTeachers = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const res = await axios.get('/teachers?per_page=1000', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    setAllTeachers(res.data.data);
+  } catch (error) {
+    console.error('Failed to fetch all teachers', error);
+  }
+};
 
   const fetchTeachers = async (page = 1) => {
     const token = localStorage.getItem('token');
@@ -93,6 +106,7 @@ const handleRegister = async () => {
     setStudents(res.data.data);
     setStudentPage(res.data.current_page);
     setStudentTotalPages(res.data.last_page);
+    
   };
   const handleEditStudentClick = (student) => {
     setEditStudentData(student);
@@ -213,13 +227,20 @@ const handleRegister = async () => {
 
   };
 
+const getTeacherNameById = (teacherId) => {
+  const teacher = allTeachers.find(t => t.id === teacherId);
+  return teacher ? `${teacher.user.first_name} ${teacher.user.last_name}` : 'Not Assigned';
+};
 
   useEffect(() => {
     if (currentTab === 'teachers') fetchTeachers(teacherPage);
   }, [currentTab, teacherPage]);
 
   useEffect(() => {
-    if (currentTab === 'students') fetchStudents(studentPage);
+    if (currentTab === 'students') 
+      fetchStudents(studentPage);
+      fetchAllTeachers(); 
+
   }, [currentTab, studentPage]);
 
   return (
@@ -301,10 +322,12 @@ const handleRegister = async () => {
                 <TableRow>
                   <TableCell>Name</TableCell><TableCell>Email</TableCell><TableCell>Phone</TableCell>
                   <TableCell>DOB</TableCell><TableCell>Class</TableCell><TableCell>Roll No</TableCell>
-                  <TableCell>Admission</TableCell><TableCell>Status</TableCell><TableCell>Actions</TableCell>
+                  <TableCell>Admission</TableCell><TableCell>Status</TableCell><TableCell>Assigned Teacher</TableCell><TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
+              
               <TableBody>
+                
                 {students.map((s) => (
                   <TableRow key={s.id}>
                     <TableCell>{s.user.first_name} {s.user.last_name}</TableCell>
@@ -315,6 +338,7 @@ const handleRegister = async () => {
                     <TableCell>{s.roll_number}</TableCell>
                     <TableCell>{s.admission_date}</TableCell>
                     <TableCell>{s.status}</TableCell>
+                    <TableCell>{getTeacherNameById(s.assigned_teacher_id)}</TableCell> 
                     <TableCell>
                     <Box display="flex" gap={1}>
                       <Button size="small" onClick={() => handleEditStudentClick(s)}>Edit</Button>
@@ -393,9 +417,35 @@ const handleRegister = async () => {
               onChange={handleEditStudentChange}
             />
             <TextField
+              fullWidth margin="normal" name="class" label="Class"
+              value={editStudentData?.class || ''}
+              onChange={handleEditStudentChange}
+            />
+            <TextField
+              fullWidth margin="normal" name="roll_number" label="Roll No" 
+              value={editStudentData?.roll_number || ''}
+              onChange={handleEditStudentChange}
+            />
+            <TextField
+              fullWidth margin="normal" name="admission_date" label="Admission" type="date"
+              InputLabelProps={{ shrink: true }} value={editStudentData?.admission_date || ''}
+              onChange={handleEditStudentChange}
+            />
+            <TextField
               fullWidth margin="normal" name="status" label="Status"
               value={editStudentData?.status || ''} onChange={handleEditStudentChange}
             />
+            <TextField
+              fullWidth select name="assigned_teacher_id" label="Assigned Teacher"
+              value={editStudentData?.assigned_teacher_id || ''} onChange={handleEditStudentChange} margin="normal"
+            >
+              <MenuItem value="">None</MenuItem>
+              {allTeachers.map((teacher) => (
+                <MenuItem key={teacher.id} value={teacher.id}>
+                  {teacher.user.first_name} {teacher.user.last_name}
+                </MenuItem>
+              ))}
+            </TextField>    
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setOpenEditStudentModal(false)}>Cancel</Button>

@@ -71,7 +71,8 @@ class StudentController extends Controller
             'class',
             'date_of_birth',
             'admission_date',
-            'status'
+            'status',
+            'assigned_teacher_id'
         ]));
 
         return response()->json(['message' => 'Student updated successfully']);
