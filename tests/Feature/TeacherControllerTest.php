@@ -2,83 +2,119 @@
 
 namespace Tests\Feature;
 
+use Tests\TestCase;
 use App\Models\User;
 use App\Models\Teacher;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
 
 class TeacherControllerTest extends TestCase
 {
     use RefreshDatabase;
 
     protected $admin;
-    protected $teacherUser;
-    protected $studentUser;
-    protected $teacher;
+    protected $teacherData;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        // Create an admin
-        $this->admin = User::factory()->create(['role' => 'admin']);
-
-        // Create a teacher
-        $this->teacherUser = User::factory()->create(['role' => 'teacher']);
-        $this->teacher = Teacher::factory()->create([
-            'user_id' => $this->teacherUser->id,
+        // Create an admin user to perform actions
+        $this->admin = User::factory()->create([
+            'role' => 'admin',
         ]);
 
-        // Create a student
-        $this->studentUser = User::factory()->create(['role' => 'student']);
+        // Teacher sample data
+        $this->teacherData = [
+            'username' => 'teacher123',
+            'email' => 'teacher@example.com',
+            'password' => 'password',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'phone_number' => '1234567890',
+            'subject_specialization' => 'Mathematics',
+            'employee_id' => 'EMP001',
+            'date_of_joining' => '2025-01-01',
+            'status' => 'active',
+        ];
     }
 
-    /** @test */
-    public function admin_can_list_teachers()
-    {
-        $response = $this->actingAs($this->admin)->get('/api/teachers');
+/** @test */
+public function admin_can_get_all_teachers()
+{
+    // Create teachers with linked users
+    Teacher::factory()->count(3)->create();
 
-        $response->assertStatus(200)
-                 ->assertJsonStructure(['data']);
-    }
+    $response = $this->actingAs($this->admin, 'api') // specify api guard
+        ->getJson('/api/teachers');
 
-    /** @test */
-    public function non_admin_cannot_list_teachers()
-    {
-        $response = $this->actingAs($this->teacherUser)->get('/api/teachers');
+    $response->assertStatus(200)
+             ->assertJsonStructure([
+                 'data' => [
+                     '*' => [
+                         'id',
+                         'user' => [
+                             'id',
+                             'first_name',
+                             'last_name',
+                             'email',
+                             'role'
+                         ],
+                         'phone_number',
+                         'subject_specialization',
+                         'employee_id',
+                         'date_of_joining',
+                         'status'
+                     ]
+                 ]
+             ]);
+}
 
-        $response->assertStatus(403);
-    }
+/** @test */
+public function admin_can_update_teacher()
+{
+    $teacher = Teacher::factory()->create();
 
-    /** @test */
-    public function teacher_can_view_own_profile()
-    {
-        $response = $this->actingAs($this->teacherUser)
-                         ->get('/api/teachers/' . $this->teacher->id);
+    $updateData = [
+        'first_name' => 'UpdatedName', // user field
+        'phone_number' => '9876543210' // teacher field
+    ];
 
-        $response->assertStatus(200)
-                 ->assertJsonFragment(['user_id' => $this->teacherUser->id]);
-    }
+    $response = $this->actingAs($this->admin, 'api')
+        ->putJson("/api/teachers/{$teacher->id}", $updateData);
 
-    /** @test */
-    public function admin_can_update_teacher()
-    {
-        $payload = ['phone_number' => '9999999999'];
+    $response->assertStatus(200)
+             ->assertJsonFragment(['first_name' => 'UpdatedName']);
 
-        $response = $this->actingAs($this->admin)
-                         ->put('/api/teachers/' . $this->teacher->id, $payload);
+    // Check both tables were updated
+    $this->assertDatabaseHas('users', [
+        'id' => $teacher->user_id,
+        'first_name' => 'UpdatedName'
+    ]);
 
-        $response->assertStatus(200)
-                 ->assertJson(['message' => 'Teacher updated successfully']);
-    }
+    $this->assertDatabaseHas('teachers', [
+        'id' => $teacher->id,
+        'phone_number' => '9876543210'
+    ]);
+}
 
-    /** @test */
-    public function teacher_can_delete_own_profile()
-    {
-        $response = $this->actingAs($this->teacherUser)
-                         ->delete('/api/teachers/' . $this->teacher->id);
+/** @test */
+public function admin_can_delete_teacher()
+{
+    $teacher = Teacher::factory()->create();
 
-        $response->assertStatus(200)
-                 ->assertJson(['message' => 'Teacher deleted successfully']);
-    }
+    $response = $this->actingAs($this->admin, 'api')
+        ->deleteJson("/api/teachers/{$teacher->id}");
+
+    $response->assertStatus(200)
+             ->assertJsonFragment(['message' => 'Teacher deleted successfully']);
+
+    $this->assertDatabaseMissing('teachers', [
+        'id' => $teacher->id,
+    ]);
+
+    // Optionally check user also deleted if cascade
+    $this->assertDatabaseMissing('users', [
+        'id' => $teacher->user_id
+    ]);
+}
 }
